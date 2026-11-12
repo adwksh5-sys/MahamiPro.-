@@ -1,0 +1,407 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mahami Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0b1220">
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;padding:20px 14px;
+  background:#0b1220;color:white;
+  font-family:Arial,sans-serif
+}
+.container{max-width:500px;margin:auto}
+h1{text-align:center;color:#38bdf8}
+.subtitle{text-align:center;color:#94a3b8}
+.panel{
+  background:#172338;padding:18px;
+  border-radius:15px;margin-top:18px
+}
+input,select{
+  width:100%;padding:13px;margin:7px 0;
+  border:1px solid #334155;border-radius:10px;
+  background:#0b1220;color:white
+}
+button{
+  padding:12px;border:0;border-radius:10px;
+  background:#0284c7;color:white;
+  font-weight:bold;cursor:pointer
+}
+button:disabled{opacity:.5}
+.auth-buttons{display:flex;gap:8px;margin-top:10px}
+.auth-buttons button{flex:1}
+#logout{background:#475569}
+.stats{display:flex;gap:8px;margin:18px 0}
+.card{
+  background:#172338;padding:14px 5px;
+  border-radius:12px;flex:1;text-align:center
+}
+.card strong{
+  display:block;color:#38bdf8;
+  font-size:24px;margin-bottom:7px
+}
+li{
+  background:#172338;padding:14px;margin:12px 0;
+  border-radius:12px;display:flex;
+  align-items:center;justify-content:space-between;
+  gap:8px;list-style:none
+}
+li small{
+  display:inline-block;margin-top:8px;
+  color:#38bdf8;font-size:12px
+}
+.done{text-decoration:line-through;color:#64748b}
+ul{padding:0}
+#clear{width:100%;margin-top:15px;background:#dc2626}
+#status{text-align:center;color:#94a3b8;font-size:13px}
+.hidden{display:none}
+.link-button{background:transparent;color:#38bdf8;padding:12px 0}
+#app input,#app select{margin-bottom:10px}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>Mahami Pro 🚀</h1>
+<p class="subtitle">نظّم يومك وحقق أهدافك</p>
+
+<div id="auth" class="panel">
+<h3>حسابك</h3>
+<input id="email" type="email" placeholder="البريد الإلكتروني">
+<input id="password" type="password" placeholder="كلمة المرور">
+
+<div class="auth-buttons">
+<button onclick="signup()">إنشاء حساب</button>
+<button onclick="login()">تسجيل الدخول</button>
+</div>
+
+<button class="link-button" onclick="forgotPassword()">نسيت كلمة المرور؟</button>
+<p id="authMessage"></p>
+</div>
+
+<div id="recovery" class="panel hidden">
+<h3>تعيين كلمة مرور جديدة 🔐</h3>
+<input id="newPassword" type="password" placeholder="كلمة المرور الجديدة">
+<input id="confirmPassword" type="password" placeholder="تأكيد كلمة المرور">
+<button onclick="changePassword()">حفظ كلمة المرور</button>
+<p id="recoveryMessage"></p>
+</div>
+
+<div id="app" class="hidden">
+
+<div class="panel">
+<p id="welcome"></p>
+<button id="logout" onclick="logout()">تسجيل الخروج</button>
+</div>
+
+<div class="stats">
+<div class="card">
+<strong id="total">0</strong>
+المجموع
+</div>
+<div class="card">
+<strong id="completed">0</strong>
+مكتملة
+</div>
+<div class="card">
+<strong id="remaining">0</strong>
+متبقية
+</div>
+</div>
+
+<div class="panel">
+<h3>إضافة مهمة جديدة 📝</h3>
+<input id="task" placeholder="اكتب مهمتك هنا">
+
+<select id="category">
+<option value="شخصي">شخصي</option>
+<option value="دراسة">دراسة</option>
+<option value="شغل">شغل</option>
+<option value="صحة">صحة</option>
+<option value="أخرى">أخرى</option>
+</select>
+
+<select id="priority">
+<option value="عالية">أولوية عالية 🔴</option>
+<option value="متوسطة" selected>أولوية متوسطة 🟡</option>
+<option value="منخفضة">أولوية منخفضة 🟢</option>
+</select>
+
+<label for="dueDate">تاريخ التسليم:</label>
+<input type="date" id="dueDate">
+
+<button onclick="addTask()">إضافة المهمة +</button>
+</div>
+
+<ul id="list"></ul>
+<button id="clear" onclick="clearTasks()">حذف كل المهام</button>
+</div>
+
+<p id="status">Mahami Pro جاهز ❤️</p>
+</div>
+
+<script>
+const SUPABASE_URL = "https://scpcbukmtchxggdcmrkc.supabase.co";
+const SUPABASE_KEY = "sb_publishable_39B6XTNuwd8Volymesx7Tw_04Iu50X9";
+
+const db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let currentUser = null;
+let tasks = [];
+let recoveryMode = false;
+
+function message(text){
+  document.getElementById("status").textContent = text;
+}
+
+async function signup(){
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if(!email || !password){
+    document.getElementById("authMessage").textContent="اكتب البريد وكلمة المرور";
+    return;
+  }
+
+  const {data,error} = await db.auth.signUp({email,password});
+
+  document.getElementById("authMessage").textContent =
+    error ? error.message :
+    data.session ? "تم إنشاء الحساب ❤️" :
+    "تم إنشاء الحساب، راجع بريدك الإلكتروني.";
+}
+
+async function login(){
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if(!email || !password){
+    document.getElementById("authMessage").textContent="اكتب البريد وكلمة المرور";
+    return;
+  }
+
+  const {error} = await db.auth.signInWithPassword({email,password});
+
+  document.getElementById("authMessage").textContent =
+    error ? error.message : "تم تسجيل الدخول";
+}
+
+async function forgotPassword(){
+  const email = document.getElementById("email").value.trim();
+
+  if(!email){
+    document.getElementById("authMessage").textContent="اكتب بريدك الإلكتروني الأول";
+    return;
+  }
+
+  const {error} = await db.auth.resetPasswordForEmail(email,{
+    redirectTo:window.location.origin + window.location.pathname
+  });
+
+  document.getElementById("authMessage").textContent =
+    error ? error.message : "راجع بريدك الإلكتروني.";
+}
+
+async function changePassword(){
+  const password = document.getElementById("newPassword").value;
+  const confirm = document.getElementById("confirmPassword").value;
+
+  if(password.length < 6){
+    document.getElementById("recoveryMessage").textContent="كلمة المرور 6 أحرف على الأقل";
+    return;
+  }
+
+  if(password !== confirm){
+    document.getElementById("recoveryMessage").textContent="كلمتا المرور غير متطابقتين";
+    return;
+  }
+
+  const {error} = await db.auth.updateUser({password});
+
+  if(error){
+    document.getElementById("recoveryMessage").textContent=error.message;
+    return;
+  }
+
+  recoveryMode=false;
+  showApp();
+  document.getElementById("authMessage").textContent="تم تغيير كلمة المرور ❤️";
+}
+
+async function logout(){
+  const {error}=await db.auth.signOut();
+  if(error) message(error.message);
+}
+
+function showApp(){
+  document.getElementById("recovery").classList.toggle("hidden",!recoveryMode);
+  document.getElementById("auth").classList.toggle("hidden",!!currentUser || recoveryMode);
+  document.getElementById("app").classList.toggle("hidden",!currentUser || recoveryMode);
+
+  if(currentUser && !recoveryMode){
+    document.getElementById("welcome").textContent="أهلاً بيك ❤️ "+currentUser.email;
+  }
+}
+
+async function loadTasks(){
+  if(!currentUser) return;
+
+  message("جاري تحميل المهام...");
+
+  const {data,error}=await db.from("tasks")
+    .select("*")
+    .eq("user_id",currentUser.id)
+    .order("created_at",{ascending:false});
+
+  if(error){
+    message("خطأ: "+error.message);
+    return;
+  }
+
+  tasks=data || [];
+  showTasks();
+  message("تم تحميل مهامك بنجاح ❤️");
+}
+
+function showTasks(){
+  const list=document.getElementById("list");
+  list.innerHTML="";
+
+  tasks.forEach(function(task){
+    const li=document.createElement("li");
+    const content=document.createElement("div");
+    const span=document.createElement("span");
+
+    span.textContent=task.task_name;
+    if(task.is_done) span.classList.add("done");
+
+    span.onclick=function(){toggleTask(task)};
+
+    const info=document.createElement("small");
+    info.textContent=
+      "📁 "+(task.category || "شخصي")+
+      " | ⭐ "+(task.priority || "متوسطة")+
+      (task.due_date ? " | 📅 "+task.due_date : "");
+
+    content.appendChild(span);
+    content.appendChild(document.createElement("br"));
+    content.appendChild(info);
+
+    const btn=document.createElement("button");
+    btn.textContent="🗑️";
+    btn.onclick=function(){deleteTask(task.id)};
+
+    li.appendChild(content);
+    li.appendChild(btn);
+    list.appendChild(li);
+  });
+
+  const completed=tasks.filter(t=>t.is_done).length;
+
+  document.getElementById("total").textContent=tasks.length;
+  document.getElementById("completed").textContent=completed;
+  document.getElementById("remaining").textContent=tasks.length-completed;
+}
+
+async function addTask(){
+  const input=document.getElementById("task");
+  const taskName=input.value.trim();
+
+  if(!taskName){
+    alert("اكتب المهمة الأول!");
+    return;
+  }
+
+  if(!currentUser){
+    alert("سجل الدخول الأول!");
+    return;
+  }
+
+  const {error}=await db.from("tasks").insert({
+    user_id:currentUser.id,
+    task_name:taskName,
+    category:document.getElementById("category").value,
+    priority:document.getElementById("priority").value,
+    due_date:document.getElementById("dueDate").value || null,
+    is_done:false
+  });
+
+  if(error){
+    message("خطأ: "+error.message);
+    return;
+  }
+
+  input.value="";
+  document.getElementById("dueDate").value="";
+  await loadTasks();
+}
+
+async function toggleTask(task){
+  const {error}=await db.from("tasks")
+    .update({is_done:!task.is_done})
+    .eq("id",task.id)
+    .eq("user_id",currentUser.id);
+
+  if(error){message(error.message);return;}
+  await loadTasks();
+}
+
+async function deleteTask(id){
+  const {error}=await db.from("tasks")
+    .delete()
+    .eq("id",id)
+    .eq("user_id",currentUser.id);
+
+  if(error){message(error.message);return;}
+  await loadTasks();
+}
+
+async function clearTasks(){
+  if(!confirm("متأكد إنك عايز تمسح كل المهام؟")) return;
+
+  const {error}=await db.from("tasks")
+    .delete()
+    .eq("user_id",currentUser.id);
+
+  if(error){message(error.message);return;}
+  await loadTasks();
+}
+
+db.auth.onAuthStateChange(function(event,session){
+  currentUser=session ? session.user : null;
+
+  if(event==="PASSWORD_RECOVERY") recoveryMode=true;
+
+  showApp();
+
+  if(currentUser && !recoveryMode){
+    loadTasks();
+  }else if(!currentUser){
+    tasks=[];
+    showTasks();
+  }
+});
+
+db.auth.getSession().then(function(result){
+  currentUser=result.data.session ? result.data.session.user : null;
+  showApp();
+  if(currentUser && !recoveryMode) loadTasks();
+});
+</script>
+  <script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js")
+      .then(() => console.log("Mahami Pro is ready"))
+      .catch(error => console.log("Service Worker error:", error));
+  });
+}
+  </script>
+</body>
+</html>
