@@ -1,10 +1,10 @@
-
-const CACHE_NAME = "mahamipro-v2";
+const CACHE_NAME = "mahamipro-v3";
 
 const urlsToCache = [
   "./",
   "./index.html",
   "./manifest.json",
+  "./icon-192.png",
   "./icon-512.png"
 ];
 
