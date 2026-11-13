@@ -1,0 +1,186 @@
+From: <Saved by Blink>
+Snapshot-Content-Location: https://adwksh5-sys.github.io/MahamiPro.-/
+Subject: Mahami Pro
+Date: Fri, 13 Nov 2026 08:08:40 GMT
+MIME-Version: 1.0
+Content-Type: multipart/related;
+	type="text/html";
+	boundary="----MultipartBoundary--12IKBmT0YA4mWRLA7j4XFGzjETLUu9Ascorf93tZTu----"
+
+
+------MultipartBoundary--12IKBmT0YA4mWRLA7j4XFGzjETLUu9Ascorf93tZTu----
+Content-Type: text/html
+Content-ID: <frame-0BD25CB84CC702003DB781FF2E79081E@mhtml.blink>
+Content-Transfer-Encoding: binary
+Content-Location: https://adwksh5-sys.github.io/MahamiPro.-/
+
+<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><link rel="stylesheet" type="text/css" href="cid:css-d2caa80d-fa6c-4430-bfde-fe2972bc847c@mhtml.blink" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b1220">
+<link rel="manifest" href="https://adwksh5-sys.github.io/MahamiPro.-/manifest.json">
+<title>Mahami Pro</title>
+
+
+
+
+</head>
+
+<body>
+<div class="container">
+
+<h1>Mahami Pro 🚀</h1>
+<p class="subtitle">نظّم يومك وحقق أهدافك</p>
+
+<div id="auth" class="panel">
+  <h3>حسابك</h3>
+  <input id="email" type="email" placeholder="البريد الإلكتروني">
+  <input id="password" type="password" placeholder="كلمة المرور">
+
+  <div class="auth-buttons">
+    <button id="signupBtn">إنشاء حساب</button>
+    <button id="loginBtn">تسجيل الدخول</button>
+  </div>
+
+  <button class="link-button" id="forgotBtn">نسيت كلمة المرور؟</button>
+  <p id="authMessage" class="message"></p>
+</div>
+
+<div id="recovery" class="panel hidden">
+  <h3>تعيين كلمة مرور جديدة 🔐</h3>
+  <input id="newPassword" type="password" placeholder="كلمة المرور الجديدة">
+  <input id="confirmPassword" type="password" placeholder="تأكيد كلمة المرور">
+  <button id="changePasswordBtn">حفظ كلمة المرور</button>
+  <p id="recoveryMessage" class="message"></p>
+</div>
+
+<div id="app" class="hidden">
+
+  <div class="panel">
+    <p id="welcome"></p>
+    <button id="logout">تسجيل الخروج</button>
+  </div>
+
+  <div class="stats">
+    <div class="card">
+      <strong id="total">0</strong>
+      المجموع
+    </div>
+    <div class="card">
+      <strong id="completed">0</strong>
+      مكتملة
+    </div>
+    <div class="card">
+      <strong id="remaining">0</strong>
+      متبقية
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>إضافة مهمة جديدة 📝</h3>
+    <input id="task" placeholder="اكتب مهمتك هنا">
+
+    <select id="category">
+      <option value="شخصي">شخصي</option>
+      <option value="دراسة">دراسة</option>
+      <option value="شغل">شغل</option>
+      <option value="صحة">صحة</option>
+      <option value="أخرى">أخرى</option>
+    </select>
+
+    <select id="priority">
+      <option value="عالية">أولوية عالية 🔴</option>
+      <option value="متوسطة" selected="">أولوية متوسطة 🟡</option>
+      <option value="منخفضة">أولوية منخفضة 🟢</option>
+    </select>
+
+    <label for="dueDate">تاريخ التسليم:</label>
+    <input type="date" id="dueDate">
+
+    <button id="addBtn">إضافة المهمة +</button>
+  </div>
+
+  <ul id="list"><li class="empty">لا توجد مهام حتى الآن 🌟</li></ul>
+  <button id="clear">حذف كل المهام</button>
+</div>
+
+<p id="status">Mahami Pro جاهز ❤️</p>
+</div>
+
+
+
+
+</body></html>
+------MultipartBoundary--12IKBmT0YA4mWRLA7j4XFGzjETLUu9Ascorf93tZTu----
+Content-Type: text/css
+Content-Transfer-Encoding: binary
+Content-Location: cid:css-d2caa80d-fa6c-4430-bfde-fe2972bc847c@mhtml.blink
+
+@charset "utf-8";
+
+* { box-sizing: border-box; }
+
+body { margin: 0px; padding: 20px 14px; background: rgb(11, 18, 32); color: rgb(255, 255, 255); font-family: Arial, sans-serif; }
+
+.container { max-width: 520px; margin: auto; }
+
+h1 { text-align: center; color: rgb(56, 189, 248); }
+
+.subtitle { text-align: center; color: rgb(148, 163, 184); }
+
+.panel { background: rgb(23, 35, 56); padding: 18px; border-radius: 15px; margin-top: 18px; }
+
+input, select { width: 100%; padding: 13px; margin: 7px 0px; border: 1px solid rgb(51, 65, 85); border-radius: 10px; background: rgb(11, 18, 32); color: white; font-size: 15px; }
+
+button { padding: 12px; border: 0px; border-radius: 10px; background: rgb(2, 132, 199); color: white; font-weight: bold; cursor: pointer; font-size: 14px; }
+
+button:disabled { opacity: 0.5; }
+
+.auth-buttons { display: flex; gap: 8px; margin-top: 10px; }
+
+.auth-buttons button { flex: 1 1 0%; }
+
+#logout { background: rgb(71, 85, 105); }
+
+.stats { display: flex; gap: 8px; margin: 18px 0px; }
+
+.card { background: rgb(23, 35, 56); padding: 14px 5px; border-radius: 12px; flex: 1 1 0%; text-align: center; }
+
+.card strong { display: block; color: rgb(56, 189, 248); font-size: 24px; margin-bottom: 7px; }
+
+ul { padding: 0px; }
+
+li { background: rgb(23, 35, 56); padding: 14px; margin: 12px 0px; border-radius: 12px; list-style: none; }
+
+.task-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+.task-name { font-weight: bold; overflow-wrap: anywhere; }
+
+.task-info { color: rgb(148, 163, 184); font-size: 12px; margin-top: 9px; }
+
+.task-actions { display: flex; gap: 7px; margin-top: 12px; }
+
+.task-actions button { flex: 1 1 0%; }
+
+.done { text-decoration: line-through; color: rgb(100, 116, 139); }
+
+.delete { background: rgb(220, 38, 38); }
+
+.complete { background: rgb(5, 150, 105); }
+
+#clear { width: 100%; margin-top: 15px; background: rgb(220, 38, 38); }
+
+#status { text-align: center; color: rgb(148, 163, 184); font-size: 13px; margin: 20px 0px; }
+
+.hidden { display: none !important; }
+
+.link-button { background: transparent; color: rgb(56, 189, 248); padding: 12px 0px; }
+
+.message { font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+
+.empty { text-align: center; color: rgb(148, 163, 184); padding: 20px; }
+
+label { display: block; margin-top: 10px; color: rgb(203, 213, 225); }
+
+#app input, #app select { margin-bottom: 10px; }
+------MultipartBoundary--12IKBmT0YA4mWRLA7j4XFGzjETLUu9Ascorf93tZTu------
