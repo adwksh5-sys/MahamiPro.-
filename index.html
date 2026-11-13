@@ -1,0 +1,557 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b1220">
+<link rel="manifest" href="manifest.json">
+<title>Mahami Pro</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;padding:20px 14px;
+  background:#0b1220;color:#fff;
+  font-family:Arial,sans-serif
+}
+.container{max-width:520px;margin:auto}
+h1{text-align:center;color:#38bdf8}
+.subtitle{text-align:center;color:#94a3b8}
+.panel{
+  background:#172338;padding:18px;
+  border-radius:15px;margin-top:18px
+}
+input,select{
+  width:100%;padding:13px;margin:7px 0;
+  border:1px solid #334155;border-radius:10px;
+  background:#0b1220;color:white;font-size:15px
+}
+button{
+  padding:12px;border:0;border-radius:10px;
+  background:#0284c7;color:white;
+  font-weight:bold;cursor:pointer;font-size:14px
+}
+button:disabled{opacity:.5}
+.auth-buttons{display:flex;gap:8px;margin-top:10px}
+.auth-buttons button{flex:1}
+#logout{background:#475569}
+.stats{display:flex;gap:8px;margin:18px 0}
+.card{
+  background:#172338;padding:14px 5px;
+  border-radius:12px;flex:1;text-align:center
+}
+.card strong{
+  display:block;color:#38bdf8;
+  font-size:24px;margin-bottom:7px
+}
+ul{padding:0}
+li{
+  background:#172338;padding:14px;margin:12px 0;
+  border-radius:12px;list-style:none
+}
+.task-top{
+  display:flex;justify-content:space-between;
+  align-items:center;gap:8px
+}
+.task-name{font-weight:bold;overflow-wrap:anywhere}
+.task-info{color:#94a3b8;font-size:12px;margin-top:9px}
+.task-actions{display:flex;gap:7px;margin-top:12px}
+.task-actions button{flex:1}
+.done{text-decoration:line-through;color:#64748b}
+.delete{background:#dc2626}
+.complete{background:#059669}
+#clear{width:100%;margin-top:15px;background:#dc2626}
+#status{text-align:center;color:#94a3b8;font-size:13px;margin:20px 0}
+.hidden{display:none!important}
+.link-button{background:transparent;color:#38bdf8;padding:12px 0}
+.message{font-size:13px;line-height:1.7;overflow-wrap:anywhere}
+.empty{text-align:center;color:#94a3b8;padding:20px}
+label{display:block;margin-top:10px;color:#cbd5e1}
+#app input,#app select{margin-bottom:10px}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>Mahami Pro 🚀</h1>
+<p class="subtitle">نظّم يومك وحقق أهدافك</p>
+
+<div id="auth" class="panel">
+  <h3>حسابك</h3>
+  <input id="email" type="email" placeholder="البريد الإلكتروني">
+  <input id="password" type="password" placeholder="كلمة المرور">
+
+  <div class="auth-buttons">
+    <button id="signupBtn">إنشاء حساب</button>
+    <button id="loginBtn">تسجيل الدخول</button>
+  </div>
+
+  <button class="link-button" id="forgotBtn">نسيت كلمة المرور؟</button>
+  <p id="authMessage" class="message"></p>
+</div>
+
+<div id="recovery" class="panel hidden">
+  <h3>تعيين كلمة مرور جديدة 🔐</h3>
+  <input id="newPassword" type="password" placeholder="كلمة المرور الجديدة">
+  <input id="confirmPassword" type="password" placeholder="تأكيد كلمة المرور">
+  <button id="changePasswordBtn">حفظ كلمة المرور</button>
+  <p id="recoveryMessage" class="message"></p>
+</div>
+
+<div id="app" class="hidden">
+
+  <div class="panel">
+    <p id="welcome"></p>
+    <button id="logout">تسجيل الخروج</button>
+  </div>
+
+  <div class="stats">
+    <div class="card">
+      <strong id="total">0</strong>
+      المجموع
+    </div>
+    <div class="card">
+      <strong id="completed">0</strong>
+      مكتملة
+    </div>
+    <div class="card">
+      <strong id="remaining">0</strong>
+      متبقية
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>إضافة مهمة جديدة 📝</h3>
+    <input id="task" placeholder="اكتب مهمتك هنا">
+
+    <select id="category">
+      <option value="شخصي">شخصي</option>
+      <option value="دراسة">دراسة</option>
+      <option value="شغل">شغل</option>
+      <option value="صحة">صحة</option>
+      <option value="أخرى">أخرى</option>
+    </select>
+
+    <select id="priority">
+      <option value="عالية">أولوية عالية 🔴</option>
+      <option value="متوسطة" selected>أولوية متوسطة 🟡</option>
+      <option value="منخفضة">أولوية منخفضة 🟢</option>
+    </select>
+
+    <label for="dueDate">تاريخ التسليم:</label>
+    <input type="date" id="dueDate">
+
+    <button id="addBtn">إضافة المهمة +</button>
+  </div>
+
+  <ul id="list"></ul>
+  <button id="clear">حذف كل المهام</button>
+</div>
+
+<p id="status">Mahami Pro جاهز ❤️</p>
+</div>
+
+<script>
+/* إعداد الاتصال بقاعدة البيانات */
+const SUPABASE_URL = "https://scpcbukmtchxggdcmrkc.supabase.co";
+const SUPABASE_KEY = "sb_publishable_39B6XTNuwd8Volymesx7Tw_04Iu50X9";
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+let currentUser = null;
+let tasks = [];
+let recoveryMode = false;
+let loadingTasks = false;
+
+const $ = id => document.getElementById(id);
+
+function message(text, element = "status") {
+  $(element).textContent = text;
+}
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#039;"
+  })[char]);
+}
+
+function showApp() {
+  $("auth").classList.toggle("hidden", !!currentUser);
+  $("app").classList.toggle("hidden", !currentUser);
+  $("recovery").classList.toggle("hidden", !recoveryMode);
+
+  if (currentUser) {
+    $("welcome").textContent =
+      "أهلاً بيك ❤️ " + (currentUser.email || "");
+  }
+}
+
+async function signup() {
+  const email = $("email").value.trim();
+  const password = $("password").value;
+
+  if (!email || !password) {
+    return message("اكتب البريد الإلكتروني وكلمة المرور", "authMessage");
+  }
+
+  if (password.length < 6) {
+    return message("كلمة المرور لازم تكون 6 أحرف على الأقل", "authMessage");
+  }
+
+  $("signupBtn").disabled = true;
+  message("جاري إنشاء الحساب...", "authMessage");
+
+  const {data, error} = await db.auth.signUp({
+    email,
+    password
+  });
+
+  $("signupBtn").disabled = false;
+
+  if (error) {
+    return message("خطأ: " + error.message, "authMessage");
+  }
+
+  if (data.session) {
+    message("تم إنشاء الحساب بنجاح ❤️");
+  } else {
+    message("تم إرسال رسالة تأكيد إلى بريدك الإلكتروني. افتحها لتأكيد الحساب.", "authMessage");
+  }
+}
+
+async function login() {
+  const email = $("email").value.trim();
+  const password = $("password").value;
+
+  if (!email || !password) {
+    return message("اكتب البريد الإلكتروني وكلمة المرور", "authMessage");
+  }
+
+  $("loginBtn").disabled = true;
+  message("جاري تسجيل الدخول...", "authMessage");
+
+  const {error} = await db.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  $("loginBtn").disabled = false;
+
+  if (error) {
+    return message("خطأ: " + error.message, "authMessage");
+  }
+
+  message("تم تسجيل الدخول بنجاح ❤️");
+}
+
+async function forgotPassword() {
+  const email = $("email").value.trim();
+
+  if (!email) {
+    return message("اكتب بريدك الإلكتروني أولاً", "authMessage");
+  }
+
+  message("جاري إرسال رابط الاستعادة...", "authMessage");
+
+  const {error} = await db.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+
+  if (error) {
+    return message("خطأ: " + error.message, "authMessage");
+  }
+
+  message("تم إرسال رابط استعادة كلمة المرور إلى بريدك الإلكتروني.", "authMessage");
+}
+
+async function changePassword() {
+  const password = $("newPassword").value;
+  const confirm = $("confirmPassword").value;
+
+  if (password.length < 6) {
+    return message("كلمة المرور يجب أن تكون 6 أحرف على الأقل", "recoveryMessage");
+  }
+
+  if (password !== confirm) {
+    return message("كلمتا المرور غير متطابقتين", "recoveryMessage");
+  }
+
+  message("جاري حفظ كلمة المرور...", "recoveryMessage");
+
+  const {error} = await db.auth.updateUser({
+    password
+  });
+
+  if (error) {
+    return message("خطأ: " + error.message, "recoveryMessage");
+  }
+
+  recoveryMode = false;
+  showApp();
+  message("تم تغيير كلمة المرور بنجاح ❤️");
+}
+
+async function logout() {
+  const {error} = await db.auth.signOut();
+
+  if (error) {
+    return message("خطأ في تسجيل الخروج: " + error.message);
+  }
+
+  currentUser = null;
+  tasks = [];
+  recoveryMode = false;
+  showApp();
+  showTasks();
+  message("تم تسجيل الخروج");
+}
+
+async function addTask() {
+  if (!currentUser) return;
+
+  const input = $("task");
+  const taskName = input.value.trim();
+
+  if (!taskName) {
+    return message("اكتب المهمة أولاً");
+  }
+
+  $("addBtn").disabled = true;
+  message("جاري إضافة المهمة...");
+
+  const {error} = await db.from("tasks").insert({
+    user_id: currentUser.id,
+    task_name: taskName,
+    category: $("category").value,
+    priority: $("priority").value,
+    due_date: $("dueDate").value || null,
+    is_done: false
+  });
+
+  $("addBtn").disabled = false;
+
+  if (error) {
+    return message("خطأ: " + error.message);
+  }
+
+  input.value = "";
+  $("dueDate").value = "";
+
+  message("تمت إضافة المهمة بنجاح ❤️");
+  await loadTasks();
+}
+
+async function loadTasks() {
+  if (!currentUser || loadingTasks) return;
+
+  loadingTasks = true;
+  message("جاري تحميل المهام...");
+
+  const {data, error} = await db
+    .from("tasks")
+    .select("*")
+    .eq("user_id", currentUser.id)
+    .order("id", {ascending:false});
+
+  loadingTasks = false;
+
+  if (error) {
+    return message("تعذر تحميل المهام: " + error.message);
+  }
+
+  tasks = data || [];
+  showTasks();
+  message("Mahami Pro جاهز ❤️");
+}
+
+function showTasks() {
+  const list = $("list");
+
+  const completedCount = tasks.filter(t => t.is_done).length;
+
+  $("total").textContent = tasks.length;
+  $("completed").textContent = completedCount;
+  $("remaining").textContent = tasks.length - completedCount;
+
+  if (!tasks.length) {
+    list.innerHTML = '<li class="empty">لا توجد مهام حتى الآن 🌟</li>';
+    return;
+  }
+
+  list.innerHTML = tasks.map(task => `
+    <li>
+      <div class="task-top">
+        <span class="task-name ${task.is_done ? "done" : ""}">
+          ${escapeHTML(task.task_name)}
+        </span>
+      </div>
+
+      <div class="task-info">
+        التصنيف: ${escapeHTML(task.category || "أخرى")}
+        <br>
+        الأولوية: ${escapeHTML(task.priority || "متوسطة")}
+        <br>
+        تاريخ التسليم: ${escapeHTML(task.due_date || "غير محدد")}
+      </div>
+
+      <div class="task-actions">
+        <button class="complete" data-action="toggle" data-id="${escapeHTML(task.id)}">
+          ${task.is_done ? "إلغاء الإكمال" : "تمت المهمة ✓"}
+        </button>
+        <button class="delete" data-action="delete" data-id="${escapeHTML(task.id)}">
+          حذف
+        </button>
+      </div>
+    </li>
+  `).join("");
+}
+
+async function toggleTask(id) {
+  const task = tasks.find(t => String(t.id) === String(id));
+  if (!task || !currentUser) return;
+
+  const {error} = await db
+    .from("tasks")
+    .update({is_done: !task.is_done})
+    .eq("id", task.id)
+    .eq("user_id", currentUser.id);
+
+  if (error) {
+    return message("خطأ: " + error.message);
+  }
+
+  await loadTasks();
+}
+
+async function deleteTask(id) {
+  if (!currentUser) return;
+
+  if (!confirm("متأكد إنك عايز تحذف المهمة؟")) return;
+
+  const {error} = await db
+    .from("tasks")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", currentUser.id);
+
+  if (error) {
+    return message("خطأ: " + error.message);
+  }
+
+  await loadTasks();
+  message("تم حذف المهمة");
+}
+
+async function clearTasks() {
+  if (!currentUser) return;
+
+  if (!confirm("متأكد إنك عايز تمسح كل المهام؟")) return;
+
+  const {error} = await db
+    .from("tasks")
+    .delete()
+    .eq("user_id", currentUser.id);
+
+  if (error) {
+    return message("خطأ: " + error.message);
+  }
+
+  await loadTasks();
+  message("تم حذف كل المهام");
+}
+
+/* ربط الأزرار */
+$("signupBtn").addEventListener("click", signup);
+$("loginBtn").addEventListener("click", login);
+$("forgotBtn").addEventListener("click", forgotPassword);
+$("changePasswordBtn").addEventListener("click", changePassword);
+$("logout").addEventListener("click", logout);
+$("addBtn").addEventListener("click", addTask);
+$("clear").addEventListener("click", clearTasks);
+
+$("list").addEventListener("click", function(event) {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+
+  const id = button.dataset.id;
+
+  if (button.dataset.action === "toggle") {
+    toggleTask(id);
+  }
+
+  if (button.dataset.action === "delete") {
+    deleteTask(id);
+  }
+});
+
+/* متابعة حالة تسجيل الدخول */
+db.auth.onAuthStateChange((event, session) => {
+  currentUser = session ? session.user : null;
+
+  if (event === "PASSWORD_RECOVERY") {
+    recoveryMode = true;
+  }
+
+  showApp();
+
+  if (currentUser && !recoveryMode) {
+    setTimeout(() => loadTasks(), 0);
+  }
+
+  if (!currentUser) {
+    tasks = [];
+    showTasks();
+  }
+});
+
+/* فحص الجلسة عند فتح التطبيق */
+async function initializeApp() {
+  try {
+    const {data, error} = await db.auth.getSession();
+
+    if (error) throw error;
+
+    currentUser = data.session ? data.session.user : null;
+
+    const params = new URLSearchParams(window.location.hash.substring(1));
+
+    if (params.get("type") === "recovery") {
+      recoveryMode = true;
+    }
+
+    showApp();
+
+    if (currentUser && !recoveryMode) {
+      await loadTasks();
+    }
+
+    message("Mahami Pro جاهز ❤️");
+
+  } catch (error) {
+    message("خطأ في الاتصال: " + error.message);
+  }
+}
+
+initializeApp();
+
+/* تسجيل Service Worker */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js")
+      .catch(error => console.log("Service Worker:", error));
+  });
+}
+</script>
+</body>
+</html>
